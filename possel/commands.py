@@ -17,6 +17,7 @@ COMMANDS = {'join',
             'me',
             'nick',
             'connect',
+            'disconnect',
             'help',
             }
 
@@ -44,10 +45,10 @@ class CommandParser(argparse.ArgumentParser):
 
     def _print_message(self, message, unused_file=None):
         buffer = self.buffer
-        model.create_line(buffer=buffer, content='=' * 80, kind='other', nick='-*-')
+        model.create_line(buffer=buffer, content='=' * 80, kind='other', nick=model.SYSNICK)
         for line in message.splitlines():
-            model.create_line(buffer=buffer, content=line, kind='other', nick='-*-')
-        model.create_line(buffer=buffer, content='=' * 80, kind='other', nick='-*-')
+            model.create_line(buffer=buffer, content=line, kind='other', nick=model.SYSNICK)
+        model.create_line(buffer=buffer, content='=' * 80, kind='other', nick=model.SYSNICK)
 
     def exit(self, *args, **kwargs):
         raise ValueError()
@@ -104,6 +105,9 @@ connect_parser.add_argument('-u', '--username', default=None,
 connect_parser.add_argument('host', help='The server to connect to')
 
 
+disconnect_parser = CommandParser(prog='disconnect', description='Disconnect from the current IRC server')
+
+
 class Dispatcher:
     def __init__(self, interfaces):
         self.interfaces = interfaces
@@ -123,7 +127,7 @@ class Dispatcher:
                 model.create_line(buffer=buffer,
                                   content='ambiguous command "{}"'.format(command),
                                   kind='other',
-                                  nick='-*-')
+                                  nick=model.SYSNICK)
 
     @help_parser.decorate
     def help(self, args):
@@ -176,6 +180,16 @@ class Dispatcher:
         interface = model.IRCServerInterface(server)
         tornado_adapter.IRCClient.from_interface(interface).connect()
         self.interfaces[interface.server_model.id] = interface
+
+    @disconnect_parser.decorate
+    def disconnect(self, args):
+        if args.buffer.server:
+            model.disconnect(args.buffer.server)
+        else:
+            model.create_line(buffer=buffer,
+                              content="Can't disconnect from system buffer.",
+                              kind='other',
+                              nick=model.SYSNICK)
 
 
 def main():

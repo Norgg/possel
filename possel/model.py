@@ -211,6 +211,7 @@ NEW_USER = 'new_user'
 NEW_LINE = 'new_line'
 NEW_BUFFER = 'new_buffer'
 NEW_SERVER = 'new_server'
+DISCONNECT = 'disconnect'
 NEW_MEMBERSHIP = 'new_membership'
 DELETED_MEMBERSHIP = 'deleted_membership'
 
@@ -295,7 +296,7 @@ def create_membership(buffer, user):
     return membership
 
 
-def delete_membership(user, buffer):
+def delete_membership(buffer, user):
     membership = IRCBufferMembershipRelation.get(user=user, buffer=buffer)
     membership.delete_instance()
     signal_factory(DELETED_MEMBERSHIP).send(None, membership=membership, buffer=buffer, user=user)
@@ -306,6 +307,12 @@ def create_server(host, port, secure, nick, realname, username):
     server = IRCServerModel.create(host=host, port=port, secure=secure, user=user)
     signal_factory(NEW_SERVER).send(None, server=server)
     return server
+
+
+def disconnect(server):
+    signal_factory(DISCONNECT).send(None, server=server)
+
+
 # =========================================================================
 
 
@@ -539,7 +546,7 @@ class IRCServerInterface:
             buffer.current = False
             buffer.save()
 
-        delete_membership(user, buffer)
+        delete_membership(buffer, user)
         create_line(buffer=buffer, user=user, kind='part', content='has left the channel')
 
     def _handle_quit(self, _, **kwargs):
@@ -553,7 +560,7 @@ class IRCServerInterface:
                 buffer.current = False
                 buffer.save()
 
-            delete_membership(user, buffer)
+            delete_membership(buffer, user)
             create_line(buffer=buffer, user=user, kind='quit', content='has quit ({})'.format(reason))
 
     def _handle_rpl_welcome(self, _, **kwargs):

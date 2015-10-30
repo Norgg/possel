@@ -48,6 +48,9 @@ class ResourcePusher(websocket.WebSocketHandler):
     def send_server_id(self, _, server):
         self.write_message({'type': 'server', 'server': server.id})
 
+    def send_disconnect(self, _, server):
+        self.write_message({'type': 'disconnect', 'server': server.id})
+
     def send_membership(self, _, membership, user, buffer):
         self.write_message({'type': 'membership',
                             'membership': membership.id,
@@ -68,6 +71,7 @@ class ResourcePusher(websocket.WebSocketHandler):
                         model.NEW_BUFFER: self.send_buffer_id,
                         model.NEW_USER: self.send_user_id,
                         model.NEW_SERVER: self.send_server_id,
+                        model.DISCONNECT: self.send_disconnect,
                         model.NEW_MEMBERSHIP: self.send_membership,
                         model.DELETED_MEMBERSHIP: self.send_deleted_membership,
                         }
