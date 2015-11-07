@@ -199,7 +199,7 @@ def initialize():
                             IRCBufferMembershipRelation,
                             ], safe=True)
     try:
-        logger.info('Getting')
+        logger.info('Getting system buffer')
         IRCBufferModel.get(name='System Buffer', kind='system')
     except p.DoesNotExist:
         logger.info('Creating')

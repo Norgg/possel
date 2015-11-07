@@ -106,6 +106,7 @@ connect_parser.add_argument('host', help='The server to connect to')
 
 
 disconnect_parser = CommandParser(prog='disconnect', description='Disconnect from the current IRC server')
+disconnect_parser.add_argument('message', help='The quit message', nargs=argparse.REMAINDER)
 
 
 class Dispatcher:
@@ -184,7 +185,10 @@ class Dispatcher:
     @disconnect_parser.decorate
     def disconnect(self, args):
         if args.buffer.server:
+            model.create_line(buffer=args.buffer, content="*** DISCONNECTED ***", kind='other', nick=model.SYSNICK)
             model.disconnect(args.buffer.server)
+            interface = self.interfaces[args.buffer.server.id]
+            interface.server_handler.quit("quit")
         else:
             model.create_line(buffer=buffer,
                               content="Can't disconnect from system buffer.",
